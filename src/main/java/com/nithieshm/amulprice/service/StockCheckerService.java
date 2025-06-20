@@ -2,7 +2,6 @@ package com.nithieshm.amulprice.service;
 
 import com.nithieshm.amulprice.entity.Product;
 import com.nithieshm.amulprice.repository.ProductRepository;
-import com.nithieshm.amulprice.repository.StockHistoryRepository;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -14,11 +13,13 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,21 +42,21 @@ public class StockCheckerService {
     }
 
     @Scheduled(fixedDelay = SCHEDULEDELAY)
+    @Async
     public void startChecking() {
         List<Product> products = productRepository.findAll();
-        String url = "";
         for (Product product : products) {
-            url = product.getUrl();
-        }
-
-        WebDriver driver = null;
-        try {
-            driver = setupDriver();
-            if (driver != null) {
-                navigateDriver(driver, url);
+            WebDriver driver = null;
+            try {
+                driver = setupDriver();
+                navigateDriver(driver, product.getUrl(), product);
+            } catch (Exception e) {
+                logger.error("Error processing product {}: {}", product.getId(), e.getMessage(), e);
+            } finally {
+                if (driver != null) {
+                    driver.quit();
+                }
             }
-        }catch (Exception e) {
-            logger.error("Error Setting up the driver {}", e.getMessage(), e);
         }
     }
 
@@ -63,18 +64,10 @@ public class StockCheckerService {
         WebDriver driver = null;
         try {
             ChromeOptions chromeOptions = new ChromeOptions();
-            chromeOptions.addArguments("--headless");
-            chromeOptions.addArguments("--no-sandbox");
-            chromeOptions.addArguments("--disable-gpu");
-            chromeOptions.addArguments("--disable-extensions");
-            chromeOptions.addArguments("--disable-images");
-            chromeOptions.addArguments("--disable-plugins");
-            chromeOptions.addArguments("--disable-web-security");
-            chromeOptions.addArguments("--window-size=1920,1080");
-            chromeOptions.addArguments("--disable-dev-shm-usage");
-            chromeOptions.addArguments("--disable-web-security");
-            chromeOptions.addArguments("-allow-running-insecure-content");
-            chromeOptions.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            chromeOptions.addArguments("--headless", "--disable-logging", "--silent", "--no-sandbox", "--disable-gpu",
+                    "--disable-extensions", "--disable-web-security", "--allow-running-insecure-content",
+                    "--window-size=1920,1080", "--disable-dev-shm-usage",
+                    "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
             WebDriverManager.chromedriver().setup();
             driver = new ChromeDriver(chromeOptions);
 
@@ -84,16 +77,16 @@ public class StockCheckerService {
         return driver;
     }
 
-    public void navigateDriver(WebDriver driver, String url) {
+    public void navigateDriver(WebDriver driver, String url, Product product) {
         driver.get(url);
-        pincodeNavigation(driver, url);
+        pincodeNavigation(driver, url, product);
     }
 
-    public void pincodeNavigation(WebDriver driver, String url) {
+    public void pincodeNavigation(WebDriver driver, String url, Product product) {
         try {
             WebElement searchInput = driver.findElement(By.id("search"));
             searchInput.clear();
-            searchInput.sendKeys("500081");
+            searchInput.sendKeys(product.getPincode());
         } catch (Exception e) {
             logger.error("Error during entering pincode {}", e.getMessage(), e);
         }
@@ -101,28 +94,27 @@ public class StockCheckerService {
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
             WebElement pincodeButton = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//a[@role='button']//p[text()='500081']")));
+                    By.xpath("//a[@role='button']//p[text()='" + product.getPincode() + "']")));
             pincodeButton.click();
         } catch (Exception e) {
             logger.error("Error during selecting pincode {}", e.getMessage(), e);
         }
-        threadDelay(driver, url);
+        threadDelay(driver, url, product);
     }
 
-    public void threadDelay(WebDriver driver, String url) {
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        executor.schedule(() -> {
-            try {
-                checkStatus(driver, url);
-            } catch (Exception e) {
-                logger.error("Error while adding delay to thread {}", e.getMessage(), e);
-            } finally {
-                executor.shutdown();
-            }
-        }, DELAYINSECONDS, TimeUnit.SECONDS);
+    public void threadDelay(WebDriver driver, String url, Product product) {
+        try {
+            Thread.sleep(DELAYINSECONDS * 1000);
+            checkStatus(driver, url, product);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Thread interrupted during delay {}", e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("Error while adding delay to thread {}", e.getMessage(), e);
+        }
     }
 
-    public void checkStatus(WebDriver driver, String url) {
+    public void checkStatus(WebDriver driver, String url, Product product) {
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
@@ -138,7 +130,6 @@ public class StockCheckerService {
                 "//div[contains(@class, 'cart-checkout') and contains(@class, 'disabled') and text()='Add to Cart']")).isEmpty();
 
         String title = driver.getTitle();
-        Product product = productRepository.findByUrl(url);
 
         if (isSoldout || isCartDisabled) {
             logger.info("{} is out of stock", title);
@@ -149,6 +140,5 @@ public class StockCheckerService {
         }
         product.setLastChecked(LocalDateTime.now());
         productRepository.save(product);
-        driver.quit();
     }
 }

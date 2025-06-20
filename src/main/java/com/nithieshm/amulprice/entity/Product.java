@@ -1,9 +1,8 @@
 package com.nithieshm.amulprice.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -13,9 +12,16 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 6)
+    @Size(min = 6, max = 6)
+    @NotNull
+    private String pincode;
+
+    @NotNull
+    @Column(length = 64)
     private String name;
+    @NotNull
     private String url;
-    private boolean useSelenium;
 
     //stock checking
     private String outOfStockSelector;
@@ -28,28 +34,32 @@ public class Product {
         return id;
     }
 
-    public String getName() {
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public @Size(min = 6, max = 6) @NotNull String getPincode() {
+        return pincode;
+    }
+
+    public void setPincode(@Size(min = 6, max = 6) @NotNull String pincode) {
+        this.pincode = pincode;
+    }
+
+    public @NotNull String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(@NotNull String name) {
         this.name = name;
     }
 
-    public String getUrl() {
+    public @NotNull String getUrl() {
         return url;
     }
 
-    public void setUrl(String url) {
+    public void setUrl(@NotNull String url) {
         this.url = url;
-    }
-
-    public boolean isUseSelenium() {
-        return useSelenium;
-    }
-
-    public void setUseSelenium(boolean useSelenium) {
-        this.useSelenium = useSelenium;
     }
 
     public String getOutOfStockSelector() {

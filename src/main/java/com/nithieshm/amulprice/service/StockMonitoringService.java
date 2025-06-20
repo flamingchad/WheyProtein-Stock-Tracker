@@ -2,24 +2,19 @@ package com.nithieshm.amulprice.service;
 
 import com.nithieshm.amulprice.entity.Product;
 import com.nithieshm.amulprice.repository.ProductRepository;
-import com.nithieshm.amulprice.repository.StockHistoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class StockMonitoringService {
     private final ProductRepository productRepository;
-    private final StockHistoryRepository stockHistoryRepository;
-    private final StockCheckerService stockCheckerService;
+    private static final Logger logger = LoggerFactory.getLogger(StockCheckerService.class);
 
-    public StockMonitoringService(ProductRepository productRepository, StockHistoryRepository stockHistoryRepository, StockCheckerService stockCheckerService) {
+    public StockMonitoringService(ProductRepository productRepository) {
         this.productRepository = productRepository;
-        this.stockHistoryRepository = stockHistoryRepository;
-        this.stockCheckerService = stockCheckerService;
     }
 
     public List<Product>getAllProducts() {
@@ -35,11 +30,7 @@ public class StockMonitoringService {
 //        currentStatus();
 //    }
 
-    public boolean currentStatus() {
-        List<Product> allProducts = getAllProducts();
-        if (allProducts.isEmpty()) {
-            return false; // or throw exception, based on your use case
-        }
-        return allProducts.get(0).isInStock();
+    public List<Product> currentStatus() {
+        return getAllProducts();
     }
 }
