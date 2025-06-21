@@ -28,16 +28,14 @@ public class StockCheckerService {
 
     private final ProductRepository productRepository;
 
-    private final int DELAYINSECONDS = 10;
-
-    private final int SCHEDULEDELAY = 60000;
+    private final int SCHEDULED_DELAY = 60000;
 
     @Autowired
     public StockCheckerService(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
 
-    @Scheduled(fixedDelay = SCHEDULEDELAY)
+    @Scheduled(fixedDelay = SCHEDULED_DELAY)
     @Async
     public void startChecking() {
         List<Product> products = productRepository.findAll();
@@ -45,7 +43,7 @@ public class StockCheckerService {
             WebDriver driver = null;
             try {
                 driver = setupDriver();
-                navigateDriver(driver, product.getUrl(), product);
+                navigateDriver(driver, product);
             } catch (Exception e) {
                 logger.error("Error processing product {}: {}", product.getId(), e.getMessage(), e);
             } finally {
@@ -56,12 +54,12 @@ public class StockCheckerService {
         }
     }
 
-    public void navigateDriver(WebDriver driver, String url, Product product) {
-        driver.get(url);
-        pincodeNavigation(driver, url, product);
+    public void navigateDriver(WebDriver driver, Product product) {
+        driver.get(product.getUrl());
+        pincodeNavigation(driver, product);
     }
 
-    public void pincodeNavigation(WebDriver driver, String url, Product product) {
+    public void pincodeNavigation(WebDriver driver, Product product) {
         try {
             WebElement searchInput = driver.findElement(By.id("search"));
             searchInput.clear();
@@ -77,13 +75,14 @@ public class StockCheckerService {
         } catch (Exception e) {
             logger.error("Error during selecting pincode {}", e.getMessage(), e);
         }
-        threadDelay(driver, url, product);
+        threadDelay(driver, product);
     }
 
-    public void threadDelay(WebDriver driver, String url, Product product) {
+    public void threadDelay(WebDriver driver, Product product) {
         try {
-            Thread.sleep(DELAYINSECONDS * 1000);
-            checkStatus(driver, url, product);
+            int DELAY_IN_SECONDS = 10;
+            Thread.sleep(DELAY_IN_SECONDS * 1000);
+            checkStatus(driver, product);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error("Thread interrupted during delay {}", e.getMessage(), e);
@@ -92,7 +91,7 @@ public class StockCheckerService {
         }
     }
 
-    public void checkStatus(WebDriver driver, String url, Product product) {
+    public void checkStatus(WebDriver driver, Product product) {
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
