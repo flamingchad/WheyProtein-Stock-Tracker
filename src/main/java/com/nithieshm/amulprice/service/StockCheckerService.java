@@ -19,11 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class StockCheckerService {
@@ -60,23 +56,6 @@ public class StockCheckerService {
         }
     }
 
-    public WebDriver setupDriver() {
-        WebDriver driver = null;
-        try {
-            ChromeOptions chromeOptions = new ChromeOptions();
-            chromeOptions.addArguments("--headless", "--disable-logging", "--silent", "--no-sandbox", "--disable-gpu",
-                    "--disable-extensions", "--disable-web-security", "--allow-running-insecure-content",
-                    "--window-size=1920,1080", "--disable-dev-shm-usage",
-                    "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-            WebDriverManager.chromedriver().setup();
-            driver = new ChromeDriver(chromeOptions);
-
-        } catch (Exception e) {
-            logger.error("Error while setting up chrome driver {}", e.getMessage(), e);
-        }
-        return driver;
-    }
-
     public void navigateDriver(WebDriver driver, String url, Product product) {
         driver.get(url);
         pincodeNavigation(driver, url, product);
@@ -93,8 +72,7 @@ public class StockCheckerService {
 
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            WebElement pincodeButton = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//a[@role='button']//p[text()='" + product.getPincode() + "']")));
+            WebElement pincodeButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[@role='button']//p[text()='" + product.getPincode() + "']")));
             pincodeButton.click();
         } catch (Exception e) {
             logger.error("Error during selecting pincode {}", e.getMessage(), e);
@@ -123,11 +101,9 @@ public class StockCheckerService {
             logger.error("Error during waiting for body to be loaded {}", e.getMessage(), e);
         }
 
-        boolean isSoldout = !driver.findElements(By.xpath(
-                "//div[contains(@class, 'alert-danger') and text()='Sold Out']")).isEmpty();
+        boolean isSoldout = !driver.findElements(By.xpath("//div[contains(@class, 'alert-danger') and text()='Sold Out']")).isEmpty();
 
-        boolean isCartDisabled = !driver.findElements(By.xpath(
-                "//div[contains(@class, 'cart-checkout') and contains(@class, 'disabled') and text()='Add to Cart']")).isEmpty();
+        boolean isCartDisabled = !driver.findElements(By.xpath("//div[contains(@class, 'cart-checkout') and contains(@class, 'disabled') and text()='Add to Cart']")).isEmpty();
 
         String title = driver.getTitle();
 
@@ -140,5 +116,19 @@ public class StockCheckerService {
         }
         product.setLastChecked(LocalDateTime.now());
         productRepository.save(product);
+    }
+
+    public WebDriver setupDriver() {
+        WebDriver driver = null;
+        try {
+            ChromeOptions chromeOptions = new ChromeOptions();
+            chromeOptions.addArguments("--headless", "--disable-logging", "--silent", "--no-sandbox", "--disable-gpu", "--disable-extensions", "--disable-web-security", "--allow-running-insecure-content", "--window-size=1920,1080", "--disable-dev-shm-usage", "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+            WebDriverManager.chromedriver().setup();
+            driver = new ChromeDriver(chromeOptions);
+
+        } catch (Exception e) {
+            logger.error("Error while setting up chrome driver {}", e.getMessage(), e);
+        }
+        return driver;
     }
 }
