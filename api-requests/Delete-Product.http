@@ -1,0 +1,5 @@
+### Delete request to example server
+
+DELETE localhost:4001/api/v1/stock/5
+
+###

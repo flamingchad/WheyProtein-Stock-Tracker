@@ -17,8 +17,8 @@ public class TelegramService extends TelegramLongPollingBot {
     private final ProductRepository productRepository;
     private final String botUsername;
 
-    public TelegramService(@Value("${bot_username}") String botUsername,
-                           @Value("${bot_token}") String botToken, DefaultBotOptions options, ProductRepository productRepository) {
+    public TelegramService(@Value("${SPRING_TELEGRAM_USERNAME}") String botUsername,
+                           @Value("${SPRING_TELEGRAM_TOKEN}") String botToken, DefaultBotOptions options, ProductRepository productRepository) {
         super(options, botToken);
         this.botUsername = botUsername;
         this.productRepository = productRepository;
@@ -57,6 +57,5 @@ public class TelegramService extends TelegramLongPollingBot {
             }
         }
     }
-
 }
 
