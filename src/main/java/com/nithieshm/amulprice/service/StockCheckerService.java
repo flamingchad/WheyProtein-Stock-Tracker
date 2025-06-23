@@ -28,11 +28,14 @@ public class StockCheckerService {
 
     private final ProductRepository productRepository;
 
+    private final TelegramService telegramService;
+
     private final int SCHEDULED_DELAY = 60000;
 
     @Autowired
-    public StockCheckerService(ProductRepository productRepository) {
+    public StockCheckerService(ProductRepository productRepository, TelegramService telegramService) {
         this.productRepository = productRepository;
+        this.telegramService = telegramService;
     }
 
     @Scheduled(fixedDelay = SCHEDULED_DELAY)
@@ -108,10 +111,13 @@ public class StockCheckerService {
 
         if (isSoldout || isCartDisabled) {
             logger.info("{} is out of stock", title);
+            product.setPrevStockStatus(product.isInStock());
             product.setInStock(false);
         } else {
             logger.info("{} is in stock", title);
+            product.setPrevStockStatus(product.isInStock());
             product.setInStock(true);
+            telegramService.notifyAllUsers();
         }
         product.setLastChecked(LocalDateTime.now());
         productRepository.save(product);

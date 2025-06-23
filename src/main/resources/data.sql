@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS product (
     url TEXT NOT NULL,
     out_of_stock_selector TEXT,
     is_in_stock BOOLEAN,
+    prev_stock_status BOOLEAN,
     last_checked TIMESTAMP
     );
 
@@ -17,6 +18,7 @@ INSERT INTO product (
     url,
     out_of_stock_selector,
     is_in_stock,
+    prev_stock_status,
     last_checked
 ) VALUES (
              '500081',
@@ -24,5 +26,6 @@ INSERT INTO product (
              'https://shop.amul.com/en/product/amul-whey-protein-32-g-or-pack-of-60-sachets',
              '//div[contains(@class, ''alert-danger'') and text()=''Sold Out'']',
              false,
+          false,
              CURRENT_TIMESTAMP
          );

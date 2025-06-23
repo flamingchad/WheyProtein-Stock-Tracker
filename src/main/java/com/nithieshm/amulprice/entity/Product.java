@@ -26,6 +26,9 @@ public class Product {
     //stock checking
     private String outOfStockSelector;
     private boolean isInStock;
+
+    // modified later, will be used with Telegram/WhatsApp/Email to provide stock alert.
+    private boolean prevStockStatus;
     private LocalDateTime lastChecked;
 
     //getters and setters
@@ -84,5 +87,13 @@ public class Product {
 
     public void setLastChecked(LocalDateTime lastChecked) {
         this.lastChecked = lastChecked;
+    }
+
+    public boolean isPrevStockStatus() {
+        return prevStockStatus;
+    }
+
+    public void setPrevStockStatus(boolean prevStockStatus) {
+        this.prevStockStatus = prevStockStatus;
     }
 }
