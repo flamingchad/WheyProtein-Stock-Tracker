@@ -1,6 +1,6 @@
-# AmulPrice - Stock Checker Application
+# Whey Protein Stock Tracker - Stock Checker Application
 
-A Spring Boot application that automatically monitors product stock availability on e-commerce websites using Selenium WebDriver. The application periodically checks product availability based on pincode and provides REST API endpoints for product management.
+A Spring Boot application that automatically monitors product stock availability on e-commerce websites using Selenium WebDriver. The application periodically checks product availability based on pincode and provides REST API endpoints for product management. Currently works only on Amul Protein products.
 
 ## Features
 
